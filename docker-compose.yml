@@ -1,0 +1,88 @@
+services:
+  mongo:
+    container_name: mongodb
+    
+    image: mongo:latest
+    
+    ports:
+      - "27017:27017"
+    
+    networks:
+      - app-teste-network
+    
+    volumes:
+      - mongo-data:/data/db
+    
+    restart: always
+    
+
+  backend:
+    container_name: backend-test
+
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    ports:
+      - "3333:3333"
+
+    restart: always
+
+    networks:
+      - app-teste-network
+
+    environment:
+      - DATABASE_URL_PROD=${DATABASE_URL_PROD}
+      - PORT=${PORT}
+      - AMBIENTE=${AMBIENTE}
+
+    depends_on:
+      - mongo
+
+  frontend:
+    container_name: frontend
+
+    volumes:
+      - frontend-volume:/var/www/html
+    
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    
+    ports:
+      - "3000:3000"
+    
+    networks:
+      - app-teste-network
+  
+    restart: always
+
+  nginx:
+    container_name: nginx-container
+    
+    volumes:
+      - frontend-volume:/var/www/html
+    
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile
+    
+    ports:
+      - 80:80
+    
+    networks:
+      - app-teste-network
+
+    restart: alwaysdocke
+
+    depends_on:
+      - mongo
+      - backend
+
+networks:
+  app-teste-network:
+    driver: bridge
+
+volumes:
+  frontend-volume:
+  mongo-data:
